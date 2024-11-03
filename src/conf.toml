@@ -1,0 +1,7 @@
+WindowSetup {
+    title: "Determinism".to_owned(),
+    samples: NumSamples::One,
+    vsync: true,
+    icon: "".to_owned(),
+    srgb: true,
+}
