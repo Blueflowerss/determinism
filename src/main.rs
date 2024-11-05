@@ -1,102 +1,21 @@
-//! The simplest possible example that does something.
-#![allow(clippy::unnecessary_wraps)]
+
+mod actor;
+mod world;
+mod site;
 
 use ggez::{
     conf, event, glam::*, graphics::{self, Color, Rect}, timer, Context, GameResult
 };
-use rand::prelude::*;
-enum ActorType {
-    Figure,
-    Deity
-}
 
-enum SiteType {
-    Default
-}
-
-enum DestinationType {
-    None,
-    Figure,
-    Site
-}
-
-struct ActorPersonality {
-    compassion: i32,
-}
-
-impl Default for ActorPersonality {
-    fn default() -> Self {
-        ActorPersonality {
-            compassion: 100,
-        }
-    }
-}
-
-
-struct World {
-    grid_size_x: i32,
-    grid_size_y: i32,
-    actors: Vec<Actor>,
-    sites: Vec<Site>, 
-}
-
-impl Default for World {
-    fn default() -> Self {
-        World {
-            grid_size_x: 20,
-            grid_size_y: 20,
-            actors: Vec::new(),
-            sites: Vec::new(),
-        }
-    }
-}
-
-struct Site {
-    pos_x: i32,
-    pos_y: i32,
-    destroyed: bool,
-}
-
-impl Default for Site {
-    fn default() -> Self {
-        Site {
-            //FIXME
-            pos_x: random::<i32>()%20,
-            pos_y: random::<i32>()%20,
-            destroyed: false,
-        }
-    }
-}
-
-struct Actor {
-    actor_type: ActorType,
-    current_site: i32,
-    pos_x: i32,
-    pos_y: i32,
-    destination: i32,
-    destination_type: DestinationType,
-    personality: ActorPersonality,
-    text_blurb: String,
-}
-
-impl Default for Actor {
-    fn default() -> Self {
-        Actor {
-            actor_type: ActorType::Figure,
-            current_site: -1,
-            pos_x: 0,
-            pos_y: 0,
-            destination: -1,
-            destination_type: DestinationType::None,
-            personality: ActorPersonality::default(),
-            text_blurb: "I don't exist and i'm not okay with this!".to_string(),
-        }
-    }
-}
+use actor::*;
+use world::*;
+use site::*;
 
 struct MainState {
     square: graphics::Mesh,
     world: World,
+    camera_zoom: f32,
+    camera_pan: Vec2
 }
 
 impl MainState {
@@ -108,10 +27,22 @@ impl MainState {
             Color::WHITE,
         )?;
         let mut _world = World::default();
+        _world.add_actor("bob", None,None);
+        _world.add_site("test", Some(10), Some(10));
         Ok(MainState { 
             square,
-            world: _world, 
+            world: _world,
+            camera_zoom: 0.,
+            camera_pan: vec2(0.,0.)
             })
+    }
+    fn game_to_screen_vector2(&self, pos_x: i32, pos_y: i32) -> Vec2 {
+        vec2( (self.camera_pan.x+pos_x as f32)*self.camera_zoom,(self.camera_pan.y+pos_y as f32)*self.camera_zoom )
+    }
+    fn game_to_screen_i32(&self, pos_x: i32, pos_y: i32) -> Vec2 {
+        vec2 ( 
+            ( self.camera_pan.x+pos_x as f32)*self.camera_zoom,
+            ( self.camera_pan.y+pos_y as f32)*self.camera_zoom)
     }
 }
 
@@ -127,11 +58,12 @@ impl event::EventHandler<ggez::GameError> for MainState {
 
         for x in 1..self.world.grid_size_x {
             for y in 1..self.world.grid_size_y {
-                canvas.draw(&self.square, Vec2::new((x*15) as f32, (y*15) as f32));
+                canvas.draw(&self.square,
+                MainState::game_to_screen_i32(self,x,y));
             } 
         }
         for site in &self.world.sites {
-            println!("{}",site.destroyed);
+            canvas.draw(&self.square, MainState::game_to_screen_vector2(self,site.pos_x, site.pos_y));
         }
         canvas.finish(ctx)?;
         //vsync
