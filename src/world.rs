@@ -1,5 +1,6 @@
 use crate::{ Actor, Site };
 use rand::prelude::*;
+use pathfinding::prelude::*;
 
 pub struct World {
     pub grid_size_x: i32,
@@ -34,4 +35,15 @@ impl World {
         new_site.pos_y = pos_y.unwrap_or(random::<i32>()%self.grid_size_y);
         self.sites.push(new_site);
     }
+    pub fn update(&mut self){
+        for site in &self.sites {
+
+        }
+        for actor in &self.actors {
+            
+        }
+    }
+/*     pub fn find_closest_site_to(&self, start_x: i32, start_y: i32) -> &Site{
+    
+    } */
 }

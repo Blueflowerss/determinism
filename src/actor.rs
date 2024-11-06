@@ -10,6 +10,11 @@ pub enum DestinationType {
     Site
 }
 
+pub enum GoalType {
+    Idle,
+    Travelling,
+    Razing
+}
 pub struct ActorPersonality {
     pub compassion: i32,
 }
@@ -25,6 +30,8 @@ impl Default for ActorPersonality {
 pub struct Actor {
     pub actor_type: ActorType,
     pub current_site: i32,
+    pub current_goal: GoalType,
+    pub think_timer: i32,
     pub pos_x: i32,
     pub pos_y: i32,
     pub destination: i32,
@@ -39,6 +46,8 @@ impl Default for Actor {
         Actor {
             actor_type: ActorType::Figure,
             current_site: -1,
+            current_goal: GoalType::Idle,
+            think_timer: 0,
             pos_x: 0,
             pos_y: 0,
             destination: -1,
@@ -46,6 +55,20 @@ impl Default for Actor {
             personality: ActorPersonality::default(),
             first_name: "Kyle".to_string(),
             text_blurb: "I don't exist and i'm not okay with this!".to_string(),
+        }
+    }
+}
+
+impl Actor {
+    pub fn update(&mut self) {
+        match self.current_goal  {
+            GoalType::Idle => {
+                if self.think_timer < 0 {
+                    self.think_timer = 100;
+                }
+            },
+            GoalType::Razing => {},
+            GoalType::Travelling => {}
         }
     }
 }

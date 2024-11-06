@@ -4,14 +4,34 @@ mod world;
 mod site;
 
 use ggez::{
-    conf, event, glam::*, graphics::{self, Color, Rect}, timer, Context, GameResult
+    conf, event::{self, MouseButton, ScanCode}, glam::*, graphics::{self, Color, Rect}, input::{keyboard::{KeyCode, KeyInput, KeyMods, KeyboardContext}, mouse::MouseContext}, timer, Context, GameResult
 };
 
 use actor::*;
+use pathfinding::num_traits::clamp_min;
 use world::*;
 use site::*;
 
+struct InputStruct {
+    mouse_ctx: MouseContext,
+    keyboard_ctx: KeyboardContext,
+    left_mouse_down: bool,
+    right_mouse_down: bool
+}
+
+impl Default for InputStruct {
+    fn default() -> Self {
+        InputStruct {
+            mouse_ctx: MouseContext::default(),
+            keyboard_ctx: KeyboardContext::default(),
+            left_mouse_down: false,
+            right_mouse_down: false
+        }
+    }
+}
+
 struct MainState {
+    input_struct: InputStruct,
     square: graphics::Mesh,
     world: World,
     camera_zoom: f32,
@@ -30,9 +50,10 @@ impl MainState {
         _world.add_actor("bob", None,None);
         _world.add_site("test", Some(10), Some(10));
         Ok(MainState { 
+            input_struct: InputStruct::default(),
             square,
             world: _world,
-            camera_zoom: 0.,
+            camera_zoom: 1.,
             camera_pan: vec2(0.,0.)
             })
     }
@@ -49,6 +70,10 @@ impl MainState {
 impl event::EventHandler<ggez::GameError> for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         if !_ctx.time.check_update_time(60){
+            let k_ctx = &_ctx.keyboard;
+            if k_ctx.is_key_pressed(KeyCode::Escape) {
+
+            }
         }
         Ok(())
     }
@@ -68,6 +93,64 @@ impl event::EventHandler<ggez::GameError> for MainState {
         canvas.finish(ctx)?;
         //vsync
         timer::yield_now();
+        Ok(())}
+    fn key_down_event(&mut self, ctx: &mut Context, input: KeyInput, _repeat: bool) -> GameResult {
+        match input.keycode {
+            // Quit if Shift+Ctrl+Q is pressed.
+            Some(KeyCode::Escape) => {
+                println!("{}","dead");
+                ctx.request_quit();
+            }
+            _ => (),
+        }
+    Ok(())
+    }
+    fn mouse_button_down_event(
+            &mut self,
+            _ctx: &mut Context,
+            _button: event::MouseButton,
+            _x: f32,
+            _y: f32,
+        ) -> Result<(), ggez::GameError> {
+            if _button == MouseButton::Left {
+                self.input_struct.left_mouse_down = true;
+            }
+            if _button == MouseButton::Right {
+                self.input_struct.right_mouse_down = true;
+            }
+        Ok(())
+    }
+    fn mouse_button_up_event(
+            &mut self,
+            _ctx: &mut Context,
+            _button: event::MouseButton,
+            _x: f32,
+            _y: f32,
+        ) -> Result<(), ggez::GameError> {
+            if _button == MouseButton::Left {
+                self.input_struct.left_mouse_down = false;
+            }
+            if _button == MouseButton::Right {
+                self.input_struct.right_mouse_down = false;
+            }
+        Ok(())
+    }
+    fn mouse_motion_event(
+            &mut self,
+            _ctx: &mut Context,
+            _x: f32,
+            _y: f32,
+            _dx: f32,
+            _dy: f32,
+        ) -> Result<(), ggez::GameError> {
+        if self.input_struct.right_mouse_down {
+            self.camera_pan.x += _dx/self.camera_zoom;
+            self.camera_pan.y += _dy/self.camera_zoom;
+        }
+        Ok(())
+    }
+    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32) -> Result<(), ggez::GameError> {
+        self.camera_zoom = (self.camera_zoom+_y/2.).clamp(1., 10.);
         Ok(())
     }
 }
