@@ -1,4 +1,4 @@
-use crate::{ Actor, Site };
+use crate::{ tile::{self, Tile, TileType}, Actor, Site };
 use rand::prelude::*;
 use pathfinding::prelude::*;
 
@@ -7,20 +7,23 @@ pub struct World {
     pub grid_size_y: i32,
     pub actors: Vec<Actor>,
     pub sites: Vec<Site>, 
-}
-
-impl Default for World {
-    fn default() -> Self {
-        World {
-            grid_size_x: 20,
-            grid_size_y: 20,
-            actors: Vec::new(),
-            sites: Vec::new(),
-        }
-    }
+    pub terrain: Vec<Tile>,
 }
 
 impl World {
+    pub fn new(grid_size_x:i32,grid_size_y:i32) -> World{
+        let mut world_struct = World { grid_size_x: grid_size_x, 
+            grid_size_y: grid_size_y, 
+            actors: Vec::new(), 
+            sites: Vec::new(),
+            terrain: Vec::new()};
+        for x in 1..grid_size_x {
+            for y in 1..grid_size_y {
+                world_struct.terrain.push(Tile{ tiletype: TileType::Ground, pos_x: x, pos_y: y });
+            }
+        }
+        world_struct
+    }
     pub fn add_actor(&mut self, name: &str, pos_x: Option<i32>,pos_y: Option<i32>){
         let mut new_actor = Actor::default();
         new_actor.first_name = name.to_string();

@@ -2,6 +2,7 @@
 mod actor;
 mod world;
 mod site;
+mod tile;
 
 use ggez::{
     conf, event::{self, MouseButton, ScanCode}, glam::*, graphics::{self, Color, Rect}, input::{keyboard::{KeyCode, KeyInput, KeyMods, KeyboardContext}, mouse::MouseContext}, timer, Context, GameResult
@@ -46,7 +47,7 @@ impl MainState {
             Rect::new(15.,15.,10.,10.),
             Color::WHITE,
         )?;
-        let mut _world = World::default();
+        let mut _world = World::new(32, 32);
         _world.add_actor("bob", None,None);
         _world.add_site("test", Some(10), Some(10));
         Ok(MainState { 
@@ -84,7 +85,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
         for x in 1..self.world.grid_size_x {
             for y in 1..self.world.grid_size_y {
                 canvas.draw(&self.square,
-                MainState::game_to_screen_i32(self,x,y));
+                MainState::game_to_screen_i32(self,x*20,y*20));
             } 
         }
         for site in &self.world.sites {
