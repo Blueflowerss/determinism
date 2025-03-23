@@ -86,7 +86,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
         for (&(x,y),&ref Tile) in self.world.terrain.iter() {
             let tile_pos = MainState::game_to_screen_i32(&self, x*20, y*20);
             let err = mesh_builder.rectangle(ggez::graphics::DrawMode::fill(),
-                Rect { x: tile_pos.x as f32, y: tile_pos.y as f32, w: 20., h: 20. }, 
+                Rect { x: tile_pos.x as f32, y: tile_pos.y as f32, w: 20.*self.camera_zoom, h: 20.*self.camera_zoom }, 
                 Tile.tiletype.color);
         }
         let mesh = graphics::Mesh::from_data(ctx,mesh_builder.build());
