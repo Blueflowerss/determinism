@@ -1,8 +1,9 @@
 use crate::{ tile::{self, Tile, TileType}, Actor, Site };
 use ggez::context::Has;
+use noise::{core::open_simplex::open_simplex_2d, permutationtable::{NoiseHasher, PermutationTable}, NoiseFn, Perlin, ScalePoint, Simplex, Vector2};
 use rand::prelude::*;
 use pathfinding::prelude::*;
-use std::collections::hash_map::*;
+use std::{collections::hash_map::*, vec};
 
 pub struct World {
     pub grid_size_x: i32,
@@ -19,9 +20,16 @@ impl World {
             actors: Vec::new(), 
             sites: Vec::new(),
             terrain: HashMap::new()};
+        let hasher = PermutationTable::new(10);
+        let zoom_factor = 0.1;
         for x in 1..grid_size_x {
             for y in 1..grid_size_y {
-                world_struct.terrain.insert((x,y),Tile{ tiletype: TileType::PLAINS, pos_x: x, pos_y: y });
+                let tile_noise = open_simplex_2d(Vector2 {x: (x as f64)*zoom_factor,y: (y as f64)*zoom_factor }, &hasher);
+                if (tile_noise > 0.) {
+                    world_struct.terrain.insert((x,y),Tile{ tiletype: TileType::PLAINS, pos_x: x, pos_y: y });
+                }else{
+                    world_struct.terrain.insert((x,y),Tile{ tiletype: TileType::WATER, pos_x: x, pos_y: y });
+                }
             }
         }
         world_struct
