@@ -3,17 +3,15 @@ mod actor;
 mod world;
 mod site;
 mod tile;
-mod colors;
 
 use ggez::{
-    conf, event::{self, MouseButton, ScanCode}, glam::*, graphics::{self, Color, Rect}, input::{keyboard::{KeyCode, KeyInput, KeyMods, KeyboardContext}, mouse::MouseContext}, timer, Context, GameResult
+    conf, event::{self, MouseButton, ScanCode}, glam::*, graphics::{self, Color, DrawParam, MeshBuilder, Rect}, input::{keyboard::{KeyCode, KeyInput, KeyMods, KeyboardContext}, mouse::MouseContext}, timer, Context, GameResult
 };
 
 use actor::*;
-use pathfinding::num_traits::clamp_min;
+use pathfinding::num_traits::{clamp_min, ToPrimitive};
 use world::*;
 use site::*;
-use colors::*;
 struct InputStruct {
     mouse_ctx: MouseContext,
     keyboard_ctx: KeyboardContext,
@@ -84,13 +82,15 @@ impl event::EventHandler<ggez::GameError> for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         let mut canvas =
             graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.2, 0.3, 1.0]));
-
-        for x in 1..self.world.grid_size_x {
-            for y in 1..self.world.grid_size_y {
-                canvas.draw(&self.square,
-                MainState::game_to_screen_i32(self,x*20,y*20));
-            } 
+        let mut mesh_builder = MeshBuilder::new();
+        for (&(x,y),&ref Tile) in self.world.terrain.iter() {
+            let tile_pos = MainState::game_to_screen_i32(&self, x*20, y*20);
+            let err = mesh_builder.rectangle(ggez::graphics::DrawMode::fill(),
+                Rect { x: tile_pos.x as f32, y: tile_pos.y as f32, w: 20., h: 20. }, 
+                Tile.tiletype.color);
         }
+        let mesh = graphics::Mesh::from_data(ctx,mesh_builder.build());
+        canvas.draw(&mesh,DrawParam::new());
         for site in &self.world.sites {
             canvas.draw(&self.square, MainState::game_to_screen_vector2(self,site.pos_x, site.pos_y));
         }

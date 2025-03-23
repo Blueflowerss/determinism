@@ -1,5 +1,7 @@
 use std::collections::hash_map;
 
+use ggez::graphics::Color;
+
 pub struct Tile {
     pub tiletype: TileType,
     pub pos_x: i32,
@@ -7,17 +9,28 @@ pub struct Tile {
 }
 
 pub struct TileType {
-    ground: bool,
-    water: bool,
-    obstructed_ground_travel:bool,
-    obstructed_travel:bool,
+    pub ground: bool,
+    pub water: bool,
+    pub obstructed_ground_travel:bool,
+    pub obstructed_travel:bool,
+    pub color:Color,
 }
 impl TileType {
-    pub const fn new(ground:bool,water:bool,obstructed_ground_travel:bool,obstructed_travel:bool) -> Self {
-        Self { ground, water, obstructed_ground_travel, obstructed_travel }
+    pub const fn new(ground:bool,water:bool,obstructed_ground_travel:bool,obstructed_travel:bool,color:Color) -> Self {
+        Self { ground, water, obstructed_ground_travel, obstructed_travel,color }
     }
-    pub const PLAINS: Self = Self::new(true, false, false, false);
-    pub const WATER: Self = Self::new(false, true, false, false);
+    pub const PLAINS: Self = Self::new(
+        true, 
+        false, 
+        false, 
+        false,
+        Color::GREEN);
+    pub const WATER: Self = Self::new(
+        false,
+        true,
+        false,
+        false,
+        Color::CYAN);
 }
 impl Default for Tile {
     fn default() -> Self {
