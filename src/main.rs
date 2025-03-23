@@ -60,7 +60,9 @@ impl MainState {
             })
     }
     fn game_to_screen_vector2(&self, pos_x: i32, pos_y: i32) -> Vec2 {
-        vec2( (self.camera_pan.x+pos_x as f32)*self.camera_zoom,(self.camera_pan.y+pos_y as f32)*self.camera_zoom )
+        vec2(
+             (self.camera_pan.x+pos_x as f32)*self.camera_zoom,
+             (self.camera_pan.y+pos_y as f32)*self.camera_zoom )
     }
     fn game_to_screen_i32(&self, pos_x: i32, pos_y: i32) -> Vec2 {
         vec2 ( 
