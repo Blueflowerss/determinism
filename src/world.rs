@@ -1,13 +1,15 @@
 use crate::{ tile::{self, Tile, TileType}, Actor, Site };
+use ggez::context::Has;
 use rand::prelude::*;
 use pathfinding::prelude::*;
+use std::collections::hash_map::*;
 
 pub struct World {
     pub grid_size_x: i32,
     pub grid_size_y: i32,
     pub actors: Vec<Actor>,
     pub sites: Vec<Site>, 
-    pub terrain: Vec<Tile>,
+    pub terrain: HashMap<(i32,i32),Tile>,
 }
 
 impl World {
@@ -16,10 +18,10 @@ impl World {
             grid_size_y: grid_size_y, 
             actors: Vec::new(), 
             sites: Vec::new(),
-            terrain: Vec::new()};
+            terrain: HashMap::new()};
         for x in 1..grid_size_x {
             for y in 1..grid_size_y {
-                world_struct.terrain.push(Tile{ tiletype: TileType::Ground, pos_x: x, pos_y: y });
+                world_struct.terrain.insert((x,y),Tile{ tiletype: TileType::PLAINS, pos_x: x, pos_y: y });
             }
         }
         world_struct
@@ -37,6 +39,12 @@ impl World {
         new_site.pos_x = pos_x.unwrap_or(random::<i32>()%self.grid_size_x);
         new_site.pos_y = pos_y.unwrap_or(random::<i32>()%self.grid_size_y);
         self.sites.push(new_site);
+    }
+    pub fn get_terrain(&mut self, grid_x:i32, grid_y:i32) -> &Tile{
+        self.terrain.get(&(grid_x,grid_y)).expect("couldn't access terrain Tile element")
+    }
+    pub fn set_terrain_type(&mut self, grid_x:i32, grid_y:i32,set_to_tile:tile::TileType){
+        self.terrain.entry((grid_x,grid_y)).and_modify(|e| e.tiletype = set_to_tile);
     }
     pub fn update(&mut self){
         for site in &self.sites {
