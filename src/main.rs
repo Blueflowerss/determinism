@@ -3,6 +3,7 @@ mod actor;
 mod world;
 mod site;
 mod tile;
+mod colors;
 
 use ggez::{
     conf, event::{self, MouseButton, ScanCode}, glam::*, graphics::{self, Color, Rect}, input::{keyboard::{KeyCode, KeyInput, KeyMods, KeyboardContext}, mouse::MouseContext}, timer, Context, GameResult
@@ -12,7 +13,7 @@ use actor::*;
 use pathfinding::num_traits::clamp_min;
 use world::*;
 use site::*;
-
+use colors::*;
 struct InputStruct {
     mouse_ctx: MouseContext,
     keyboard_ctx: KeyboardContext,
