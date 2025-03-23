@@ -30,7 +30,7 @@ impl TileType {
         true,
         false,
         false,
-        Color::CYAN);
+        Color::BLUE);
 }
 impl Default for Tile {
     fn default() -> Self {
