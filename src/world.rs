@@ -35,8 +35,18 @@ impl IslandCollection {
         };
         island_collection
     }
-    pub fn insert(&mut self, island : Island){
+    pub fn insert(&mut self, island : Island, island_index : i32){
+        for tile in &island.tiles {
+            self.tile_to_island_index.insert(*tile,island_index);
+        }
         self.islands.push(island);
+    }
+    pub fn get_island_index_at_tile(&self, cell_x : i32, cell_y : i32) -> i32{
+        if self.tile_to_island_index.contains_key(&(cell_x,cell_y)){
+            self.tile_to_island_index[&(cell_x,cell_y)]
+        } else {
+            -1
+        }
     }
 }
 
@@ -92,7 +102,7 @@ impl World {
                 let x_within_bounds:bool = (1..=self.grid_size_x).contains(&(grid_x+x));
                 let y_within_bounds:bool = (1..=self.grid_size_y).contains(&(grid_y+y));
                 if (x_within_bounds && y_within_bounds){        
-                    if (self.get_terrain(grid_x+x, grid_y+y).tiletype.ground){
+                    if self.get_terrain(grid_x+x, grid_y+y).tiletype.ground {
                         successors.push((grid_x+x,grid_y+y));
                     }
             }
@@ -110,6 +120,7 @@ impl World {
                 if (!visited.contains(&(x,y))){
 
                     if (self.get_terrain(x, y).tiletype.ground){
+                        let island_id = self.island_collection.next_island;
                         let reachable = bfs_reach((x,y), 
                         |(x,y)| self.get_successors(*x, *y));
                         let mut island_tiles: HashSet<(i32,i32)> = HashSet::new();
@@ -122,7 +133,8 @@ impl World {
                         let island: Island = Island { id: self.island_collection.next_island,
                              size: reachable_count,
                               tiles: island_tiles };
-                        self.island_collection.insert(island);
+                              self.island_collection.insert(island, self.island_collection.next_island);
+                        self.island_collection.next_island += 1;
                     }
                 }
             }

@@ -133,6 +133,8 @@ impl event::EventHandler<ggez::GameError> for MainState {
             _y: f32,
         ) -> Result<(), ggez::GameError> {
             println!("{:?}", self.screen_to_game_i32(_x,_y));
+            let cell_mouse = self.screen_to_game_i32(_x,_y);
+            println!("{}", self.world.island_collection.get_island_index_at_tile(cell_mouse.0,cell_mouse.1));
             if _button == MouseButton::Left {
                 self.input_struct.left_mouse_down = true;
             }
