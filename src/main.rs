@@ -47,7 +47,9 @@ impl MainState {
             Color::WHITE,
         )?;
         let mut _world = World::new(32, 32);
-        _world.add_actor("bob", None,None);
+        for i in 1..21 {
+            _world.add_actor(&i.to_string()[..], None,None);
+        }
         _world.add_site("test", Some(10), Some(10));
         Ok(MainState { 
             input_struct: InputStruct::default(),
@@ -77,6 +79,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
 
             }
         }
+        self.world.update();
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
@@ -154,7 +157,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
         Ok(())
     }
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32) -> Result<(), ggez::GameError> {
-        self.camera_zoom = (self.camera_zoom+_y/2.).clamp(1., 10.);
+        self.camera_zoom = (self.camera_zoom+_y/2.).clamp(0.1, 10.);
         Ok(())
     }
 }

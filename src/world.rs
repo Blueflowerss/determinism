@@ -19,7 +19,9 @@ impl World {
             grid_size_y: grid_size_y, 
             actors: Vec::new(), 
             sites: Vec::new(),
-            terrain: HashMap::new()};
+            terrain: HashMap::new(),
+            new_actor_id: 0,
+            new_site_id: 0, };
         let hasher = PermutationTable::new(10);
         let zoom_factor = 0.1;
         for x in 1..grid_size_x {
@@ -39,6 +41,8 @@ impl World {
         new_actor.first_name = name.to_string();
         new_actor.pos_x = pos_x.unwrap_or(new_actor.pos_x);
         new_actor.pos_y = pos_y.unwrap_or(new_actor.pos_y);
+        new_actor.id = self.new_actor_id;
+        self.new_actor_id += 1;
         self.actors.push(new_actor);
     }
     pub fn add_site(&mut self, name: &str, pos_x: Option<i32>, pos_y: Option<i32> ){
@@ -46,6 +50,8 @@ impl World {
         new_site.name = name.to_string();
         new_site.pos_x = pos_x.unwrap_or(random::<i32>()%self.grid_size_x);
         new_site.pos_y = pos_y.unwrap_or(random::<i32>()%self.grid_size_y);
+        new_site.id = self.new_site_id;
+        self.new_site_id += 1;
         self.sites.push(new_site);
     }
     pub fn get_terrain(&mut self, grid_x:i32, grid_y:i32) -> &Tile{
@@ -58,8 +64,8 @@ impl World {
         for site in &self.sites {
 
         }
-        for actor in &self.actors {
-            
+        for actor in self.actors.iter_mut() {
+            actor.update();
         }
     }
 /*     pub fn find_closest_site_to(&self, start_x: i32, start_y: i32) -> &Site{

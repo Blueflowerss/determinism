@@ -29,6 +29,7 @@ impl Default for ActorPersonality {
 
 pub struct Actor {
     pub actor_type: ActorType,
+    pub id: i32,
     pub current_site: i32,
     pub current_goal: GoalType,
     pub think_timer: i32,
@@ -45,6 +46,7 @@ impl Default for Actor {
     fn default() -> Self {
         Actor {
             actor_type: ActorType::Figure,
+            id: 0,
             current_site: -1,
             current_goal: GoalType::Idle,
             think_timer: 0,
@@ -65,6 +67,9 @@ impl Actor {
             GoalType::Idle => {
                 if self.think_timer < 0 {
                     self.think_timer = 100;
+                    println!("{} is thinking..", self.id );
+                }else{
+                    self.think_timer -= 1;
                 }
             },
             GoalType::Razing => {},
