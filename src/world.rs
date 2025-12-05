@@ -1,31 +1,59 @@
-use crate::{ tile::{self, Tile, TileType}, Actor, Site };
-use ggez::context::Has;
+use crate::{ Actor, Site, actor, tile::{self, Tile, TileType} };
+use ggez::{context::Has, glam::vec2};
 use noise::{core::open_simplex::open_simplex_2d, permutationtable::{NoiseHasher, PermutationTable}, NoiseFn, Perlin, ScalePoint, Simplex, Vector2};
 use rand::prelude::*;
-use pathfinding::prelude::*;
-use std::{collections::hash_map::*, vec};
+use pathfinding::{directed::bfs, grid, prelude::bfs_reach};
+use std::{collections::hash_map::*, vec,collections::HashSet};
 
 pub struct World {
     pub grid_size_x: i32,
     pub grid_size_y: i32,
     pub actors: Vec<Actor>,
-    pub sites: Vec<Site>, 
+    pub new_actor_id: i32,
+    pub sites: Vec<Site>,
+    pub new_site_id: i32, 
     pub terrain: HashMap<(i32,i32),Tile>,
+    pub island_collection: IslandCollection,
+}
+//navigation stuff
+pub struct Island {
+    pub id: i32,
+    pub size: i32,
+    pub tiles: HashSet<(i32,i32)>,
+}
+pub struct IslandCollection {
+    pub islands: Vec<Island>,
+    pub next_island: i32,
+    pub tile_to_island_index: HashMap<(i32,i32),i32>,
+}
+impl IslandCollection {
+    pub fn new() -> IslandCollection {
+        let island_collection = IslandCollection {
+            islands: Vec::new(),
+            next_island: 0,
+            tile_to_island_index: HashMap::new(),
+        };
+        island_collection
+    }
+    pub fn insert(&mut self, island : Island){
+        self.islands.push(island);
+    }
 }
 
 impl World {
-    pub fn new(grid_size_x:i32,grid_size_y:i32) -> World{
+    pub fn new(grid_size_x:i32,grid_size_y:i32,seed:i32) -> World{
         let mut world_struct = World { grid_size_x: grid_size_x, 
             grid_size_y: grid_size_y, 
             actors: Vec::new(), 
             sites: Vec::new(),
             terrain: HashMap::new(),
+            island_collection: IslandCollection::new(),
             new_actor_id: 0,
             new_site_id: 0, };
-        let hasher = PermutationTable::new(10);
+        let hasher = PermutationTable::new(seed as u32);
         let zoom_factor = 0.1;
-        for x in 1..grid_size_x {
-            for y in 1..grid_size_y {
+        for x in 1..=grid_size_x {
+            for y in 1..=grid_size_y {
                 let tile_noise = open_simplex_2d(Vector2 {x: (x as f64)*zoom_factor,y: (y as f64)*zoom_factor }, &hasher);
                 if (tile_noise > 0.) {
                     world_struct.terrain.insert((x,y),Tile{ tiletype: TileType::PLAINS, pos_x: x, pos_y: y });
@@ -57,8 +85,48 @@ impl World {
     pub fn get_terrain(&mut self, grid_x:i32, grid_y:i32) -> &Tile{
         self.terrain.get(&(grid_x,grid_y)).expect("couldn't access terrain Tile element")
     }
+    pub fn get_successors(&mut self, grid_x:i32, grid_y:i32) -> Vec<(i32,i32)> {
+        let mut successors = Vec::new();
+        for x in -1..=1 {
+            for y in -1..=1 {
+                let x_within_bounds:bool = (1..=self.grid_size_x).contains(&(grid_x+x));
+                let y_within_bounds:bool = (1..=self.grid_size_y).contains(&(grid_y+y));
+                if (x_within_bounds && y_within_bounds){        
+                    if (self.get_terrain(grid_x+x, grid_y+y).tiletype.ground){
+                        successors.push((grid_x+x,grid_y+y));
+                    }
+            }
+            }
+        }
+        successors
+    }
     pub fn set_terrain_type(&mut self, grid_x:i32, grid_y:i32,set_to_tile:tile::TileType){
         self.terrain.entry((grid_x,grid_y)).and_modify(|e| e.tiletype = set_to_tile);
+    }
+    pub fn regenerate_navigation(&mut self){
+        let mut visited:HashSet<(i32,i32)> = HashSet::new();
+        for x in 1..=self.grid_size_x {
+            for y in 1..=self.grid_size_y {
+                if (!visited.contains(&(x,y))){
+
+                    if (self.get_terrain(x, y).tiletype.ground){
+                        let reachable = bfs_reach((x,y), 
+                        |(x,y)| self.get_successors(*x, *y));
+                        let mut island_tiles: HashSet<(i32,i32)> = HashSet::new();
+                        let mut reachable_count = 0;
+                        for tile in reachable {
+                            visited.insert(tile);
+                            island_tiles.insert(tile);
+                            reachable_count += 1;
+                        }
+                        let island: Island = Island { id: self.island_collection.next_island,
+                             size: reachable_count,
+                              tiles: island_tiles };
+                        self.island_collection.insert(island);
+                    }
+                }
+            }
+        }
     }
     pub fn update(&mut self){
         for site in &self.sites {

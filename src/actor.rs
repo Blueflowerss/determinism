@@ -67,7 +67,7 @@ impl Actor {
             GoalType::Idle => {
                 if self.think_timer < 0 {
                     self.think_timer = 100;
-                    println!("{} is thinking..", self.id );
+                    //println!("{} is thinking..", self.id );
                 }else{
                     self.think_timer -= 1;
                 }

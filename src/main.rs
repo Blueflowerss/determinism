@@ -5,16 +5,17 @@ mod site;
 mod tile;
 
 use ggez::{
-    conf, event::{self, MouseButton, ScanCode}, glam::*, graphics::{self, Color, DrawParam, MeshBuilder, Rect}, input::{keyboard::{KeyCode, KeyInput, KeyMods, KeyboardContext}, mouse::MouseContext}, timer, Context, GameResult
+    Context, GameResult, conf, event::{self, MouseButton, ScanCode}, glam::*, graphics::{self, Color, DrawParam, MeshBuilder, Rect}, input::{keyboard::{KeyCode, KeyInput, KeyMods, KeyboardContext}, mouse::{self, MouseContext}}, timer
 };
 
 use actor::*;
-use pathfinding::num_traits::{clamp_min, ToPrimitive};
+use pathfinding::num_traits::{Float, ToPrimitive, clamp_min};
 use world::*;
 use site::*;
 struct InputStruct {
     mouse_ctx: MouseContext,
     keyboard_ctx: KeyboardContext,
+    mouse_pos: (f32,f32),
     left_mouse_down: bool,
     right_mouse_down: bool
 }
@@ -24,6 +25,7 @@ impl Default for InputStruct {
         InputStruct {
             mouse_ctx: MouseContext::default(),
             keyboard_ctx: KeyboardContext::default(),
+            mouse_pos: (0.,0.),
             left_mouse_down: false,
             right_mouse_down: false
         }
@@ -46,11 +48,12 @@ impl MainState {
             Rect::new(15.,15.,10.,10.),
             Color::WHITE,
         )?;
-        let mut _world = World::new(32, 32);
+        let mut _world = World::new(32, 32,42);
         for i in 1..21 {
             _world.add_actor(&i.to_string()[..], None,None);
         }
         _world.add_site("test", Some(10), Some(10));
+        _world.regenerate_navigation();
         Ok(MainState { 
             input_struct: InputStruct::default(),
             square,
@@ -59,15 +62,25 @@ impl MainState {
             camera_pan: vec2(0.,0.)
             })
     }
+    fn screen_to_game(&self, pos_x: f32, pos_y: f32) -> Vec2 {
+    vec2(
+            ((-1.*self.camera_pan.x+pos_x)/20.)-1.,
+            ((-1.*self.camera_pan.y+pos_y)/20.)-1. )
+    }
+    fn screen_to_game_i32(&self, pos_x: f32, pos_y: f32) -> (i32,i32) {
+        (
+            (((-1.*self.camera_pan.x+pos_x)/20.)-1.).ceil() as i32,
+            (((-1.*self.camera_pan.y+pos_y)/20.)-1.).ceil() as i32 )
+    }
     fn game_to_screen_vector2(&self, pos_x: i32, pos_y: i32) -> Vec2 {
         vec2(
-             (self.camera_pan.x+pos_x as f32)*self.camera_zoom,
-             (self.camera_pan.y+pos_y as f32)*self.camera_zoom )
+             (self.camera_pan.x+pos_x as f32),
+             (self.camera_pan.y+pos_y as f32) )
     }
     fn game_to_screen_i32(&self, pos_x: i32, pos_y: i32) -> Vec2 {
         vec2 ( 
-            ( self.camera_pan.x+pos_x as f32)*self.camera_zoom,
-            ( self.camera_pan.y+pos_y as f32)*self.camera_zoom)
+            ( self.camera_pan.x+pos_x as f32),
+            ( self.camera_pan.y+pos_y as f32))
     }
 }
 
@@ -119,6 +132,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
             _x: f32,
             _y: f32,
         ) -> Result<(), ggez::GameError> {
+            println!("{:?}", self.screen_to_game_i32(_x,_y));
             if _button == MouseButton::Left {
                 self.input_struct.left_mouse_down = true;
             }
@@ -150,6 +164,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
             _dx: f32,
             _dy: f32,
         ) -> Result<(), ggez::GameError> {
+        self.input_struct.mouse_pos = (_x,_y);
         if self.input_struct.right_mouse_down {
             self.camera_pan.x += _dx/self.camera_zoom;
             self.camera_pan.y += _dy/self.camera_zoom;
@@ -157,7 +172,7 @@ impl event::EventHandler<ggez::GameError> for MainState {
         Ok(())
     }
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32) -> Result<(), ggez::GameError> {
-        self.camera_zoom = (self.camera_zoom+_y/2.).clamp(0.1, 10.);
+        //self.camera_zoom = (self.camera_zoom+_y/2.).clamp(0.1, 5.);
         Ok(())
     }
 }
