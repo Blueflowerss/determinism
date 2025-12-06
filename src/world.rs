@@ -11,6 +11,7 @@ pub struct World {
     pub actors: Vec<Actor>,
     pub new_actor_id: i32,
     pub sites: Vec<Site>,
+    pub need_world_update: bool,
     pub new_site_id: i32, 
     pub terrain: HashMap<(i32,i32),Tile>,
     pub island_collection: IslandCollection,
@@ -24,15 +25,22 @@ pub struct Island {
 pub struct IslandCollection {
     pub islands: Vec<Island>,
     pub next_island: i32,
+    //dynamic references to sites and actors currently on the island
+    pub which_sites_does_island_have : HashMap<i32,HashSet<i32>>,
+    pub which_actors_does_island_have : HashMap<i32,HashSet<i32>>,
     pub tile_to_island_index: HashMap<(i32,i32),i32>,
 }
 impl IslandCollection {
     pub fn new() -> IslandCollection {
-        let island_collection = IslandCollection {
+        let mut island_collection = IslandCollection {
             islands: Vec::new(),
             next_island: 0,
+            which_sites_does_island_have: HashMap::new(),
+            which_actors_does_island_have: HashMap::new(),
             tile_to_island_index: HashMap::new(),
         };
+        island_collection.which_sites_does_island_have.insert(-1,HashSet::new());
+        island_collection.which_actors_does_island_have.insert(-1,HashSet::new());
         island_collection
     }
     pub fn insert(&mut self, island : Island, island_index : i32){
@@ -48,6 +56,11 @@ impl IslandCollection {
             -1
         }
     }
+    pub fn clear(&mut self){
+        self.islands.clear();
+        self.next_island = 0;
+        self.tile_to_island_index.clear();
+    }
 }
 
 impl World {
@@ -56,6 +69,7 @@ impl World {
             grid_size_y: grid_size_y, 
             actors: Vec::new(), 
             sites: Vec::new(),
+            need_world_update: false,
             terrain: HashMap::new(),
             island_collection: IslandCollection::new(),
             new_actor_id: 0,
@@ -112,13 +126,14 @@ impl World {
     }
     pub fn set_terrain_type(&mut self, grid_x:i32, grid_y:i32,set_to_tile:tile::TileType){
         self.terrain.entry((grid_x,grid_y)).and_modify(|e| e.tiletype = set_to_tile);
+        self.need_world_update = true;
     }
-    pub fn regenerate_navigation(&mut self){
+    pub fn map_islands(&mut self){
         let mut visited:HashSet<(i32,i32)> = HashSet::new();
+        self.island_collection.clear();
         for x in 1..=self.grid_size_x {
             for y in 1..=self.grid_size_y {
                 if (!visited.contains(&(x,y))){
-
                     if (self.get_terrain(x, y).tiletype.ground){
                         let island_id = self.island_collection.next_island;
                         let reachable = bfs_reach((x,y), 
@@ -141,6 +156,32 @@ impl World {
         }
     }
     pub fn update(&mut self){
+        if self.need_world_update {
+            self.update_world();
+        }
+        self.update_entities();
+    }
+    pub fn update_world(&mut self){
+        // -1 island is probably the ocean
+        for site in &self.sites{
+            let site_position = (site.pos_x,site.pos_y);
+            let site_island = self.island_collection.get_island_index_at_tile(
+                site_position.0,
+                site_position.1);
+            if let Some(val) = self.island_collection.which_sites_does_island_have.get_mut(&site_island) { val.insert(site.id); };
+        }
+        for actor in &self.actors{
+            let actor_position = (actor.pos_x,actor.pos_y);
+            let actor_island = self.island_collection.get_island_index_at_tile(
+                actor_position.0,
+                actor_position.1);
+            if let Some(val) = 
+            self.island_collection.which_actors_does_island_have
+            .get_mut(&actor_island) { val.insert(actor.id); };
+        }
+        self.need_world_update = false;
+    }
+    pub fn update_entities(&mut self){
         for site in &self.sites {
 
         }

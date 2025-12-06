@@ -31,7 +31,7 @@ impl TileType {
         false,
         false,
         Color::BLUE);
-}
+    }
 impl Default for Tile {
     fn default() -> Self {
         Tile {

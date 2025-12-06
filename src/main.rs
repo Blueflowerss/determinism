@@ -53,7 +53,7 @@ impl MainState {
             _world.add_actor(&i.to_string()[..], None,None);
         }
         _world.add_site("test", Some(10), Some(10));
-        _world.regenerate_navigation();
+        _world.map_islands();
         Ok(MainState { 
             input_struct: InputStruct::default(),
             square,
